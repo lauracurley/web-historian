@@ -3,6 +3,7 @@ var req = require('request');
 var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var Promise = require('bluebird');
+var data = require('/Users/student/2016-02-web-historian/archives/sites.json');
 
 
 // var index = require('../web/public/index.html');
@@ -20,16 +21,17 @@ exports.handleRequest = function (req, res) {
     var lookup, f;
     if (req.url === '/') { 
       lookup = '/index.html'; 
+      lookup = __dirname + '/public' + lookup; f = lookup; 
     } else {
-      lookup = req.url;
+      lookup = (req.url.slice(1));
+      console.log('--------------lookup--------------->', lookup);
+      lookup = data[lookup]; f = lookup; 
+      console.log('--------------Lookup-result------------>', f);
+      res.end(f);
     }
 
-    // var lookup = path.basename(decodeURI(req.url)) || 'index.html', f = lookup;
-    lookup = '../web/public' + lookup; f = lookup; 
     fs.exists(f, function (exists) {
-      console.log('---------------F-------------', exists);
       if (exists) {
-        console.log('----------EXISTS----------->', exists);
         fs.readFile(f, 'utf8', function(err, data) {
           if (err) {
             res.writeHead(404); res.end('Server Error!');
