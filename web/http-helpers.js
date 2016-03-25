@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 var archive = require('../helpers/archive-helpers');
-var Q = require('q');
+// var Q = require('q');
 
 exports.headers = headers = {
   'access-control-allow-origin': '*',
@@ -12,11 +12,28 @@ exports.headers = headers = {
 };
 
 exports.serveAssets = function(res, asset, callback) {
-  // Write some code here that helps serve up your static files!
-  // (Static files are things like html (yours or archived from others...),
-  // css, or anything that doesn't change often.)
+
+  var encoding = {encoding: 'utf8'};
+  fs.readFile( archive.paths.siteAssets + asset, encoding, function(err, data) {
+    if (err) {
+      // file doesn't exist in public!
+      fs.readFile( archive.paths.archivedSites + asset, encoding, function(err, data) {
+        if (err) {
+          // file doesn't exist in archive!
+          callback ? callback() : exports.send404(res);
+        } else {
+          exports.sendResponse(res, data);
+        }
+      });
+    } else {
+      exports.sendResponse(res, data);
+    }
+  });
+};
+
+exports.sendResponse = function(response, obj, status) {
   status = status || 200;
-  response.writeHead(status, header);
+  response.writeHead(status, headers);
   response.end(obj);
 };
 
@@ -31,7 +48,7 @@ exports.collectData = function(request, callback) {
 };
 
 exports.send404 = function(response) {
-  exports.sendRequest(response, '404: Page not found', 404);
+  exports.sendResponse(response, '404: Page not found', 404);
 };
 
 exports.sendRedirect = function(response, location, status) {
@@ -40,24 +57,24 @@ exports.sendRedirect = function(response, location, status) {
   response.end();
 };
 
-exports.serveAssests = function(res, asset, callback) {
-  var encoding = {encoding: 'utf8'};
+// exports.serveAssests = function(res, asset, callback) {
+//   var encoding = {encoding: 'utf8'};
 
-  fs.readFile( archive.paths.siteAssets + asset, encoding, function(err, data) {
-    if (err) {
-      fs.readFile( archive.paths.archivedSites + asset, encoding, function(err, data) {
-        if (err) {
-          callback ? callback() : exports.send404(res);
+//   fs.readFile( archive.paths.siteAssets + asset, encoding, function(err, data) {
+//     if (err) {
+//       fs.readFile( archive.paths.archivedSites + asset, encoding, function(err, data) {
+//         if (err) {
+//           callback ? callback() : exports.send404(res);
           
-        } else {
-          exports.sendResponse(res, data);
-        }
-      });
-    } else {
-      exports.sendRsponse(res, data);
-    }
-  });
-};
+//         } else {
+//           exports.sendResponse(res, data);
+//         }
+//       });
+//     } else {
+//       exports.sendRsponse(res, data);
+//     }
+//   });
+// };
 
 
 // As you progress, keep thinking about what helper functions you can put here!

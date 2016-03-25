@@ -1,7 +1,9 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-var data = require('/Users/student/2016-02-web-historian/archives/sites.txt');
+var request = require('request');
+
+//var data = require('/Users/student/2016-02-web-historian/archives/sites.txt');
 
 
 /*
@@ -27,51 +29,50 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-// we have a file with a list of URLS
+// we have a file with a list of URL
 // the below function reads that list of URLS
-var sitesFilePath = '/Users/student/2016-02-web-historian/archives/sites.txt';
+//var sitesFilePath = '/Users/student/2016-02-web-historian/archives/sites.txt';
 
 exports.readListOfUrls = function(callback) { // lookup === 'www.google.com'
-  var f = sitesFilePath;
+  var f = exports.paths.list;
   fs.exists(f, function (exists) {
     if (exists) {
-      console.log('------------------just checking---------------');
       fs.readFile(f, 'utf8', function(err, data) {
         if (err) {
-          console.log('-----------Error: can\'t read list of urls----------');
           return;
         }
         // this is where we want to make an array from the read file
-        return data.split('\n'); 
+        if (callback) {
+          callback(data.split('\n')); 
+        }
       });
     } else {
-      console.log('-----------Error: filepath doesnt exist----------');
     }
   });
 };
 
 // can accept a list that we read (above)
 // and check if a URL is in that list
-exports.isUrlInList = function(lookup, callback) { // lookup === URL were looking for 
-  var sites = readListOfUrls();
-  console.log('-----------------------sites--->', sites);
-  // if lookup is in the array we get from splitting sites.txt by \n
-  if (sites.indexOf(lookup) !== -1) {
-    return true;
-  } else {
-    return false;
-  }
+exports.isUrlInList = function(url, callback) { // lookup === URL were looking for 
+  exports.readListOfUrls(function(sites) {
+    // if lookup is in the array we get from splitting sites.txt by \n
+    if (sites.indexOf(url) !== -1) {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 
 // can use fs.write to add a URL to a list
-exports.addUrlToList = function(lookup, callback) {
+exports.addUrlToList = function(url, callback) {
   fs.appendFile(exports.paths.list, url + '\n', function(err, file) {
     callback();
   });
 };
 
 
-exports.isUrlArchived = function(lookup, callback) {
+exports.isUrlArchived = function(url, callback) {
   var sitePath = path.join(exports.paths.archivedSites, url);
 
   fs.exists(sitePath, function(exists) {
