@@ -4,10 +4,8 @@ var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var Promise = require('bluebird');
 var helpers = require('./http-helpers');
+var url = require('url');
 
-
-// var index = require('../web/public/index.html');
-// require more modules/folders here!
 
 exports.handleRequest = function (request, response) {
   var mimeTypes = {
@@ -29,18 +27,20 @@ exports.handleRequest = function (request, response) {
         response.writeHead(200, headers);
         response.end(data);
       });
-      //lookup = __dirname + '/public' + lookup; f = lookup; 
-    }
-    helpers.serveAssets(response, lookup, function() {
+    } else {
+      lookup = url.parse(request.url).pathname;
+      helpers.serveAssets(response, lookup, function() {
 
-      archive.isUrlInList(lookup, function(found) {
-        if (found) {
-          helpers.sendRedirect(response, '/loading.html');
-        } else {
-          helpers.send404(response);
-        }
+        archive.isUrlInList(lookup, function(found) {
+          if (found) {
+            console.log(__dirname);
+            helpers.sendRedirect(response, __dirname + '/loading.html');
+          } else {
+            helpers.send404(response);
+          }
+        });
       });
-    });
+    }
   } else if (request.method === 'POST') {
     helpers.collectData(request, function(data) {
       var url = data.split('=')[1].replace('http://', '');
@@ -70,6 +70,9 @@ exports.handleRequest = function (request, response) {
     helpers.send404(res);
   }
 };
+
+// The below code shows our progess before the solution came out.
+// We decided not to refactor the below and refactored based on the solution above.
 //     var lookup, f;
 //     if (request.url === '/') { 
 //       lookup = '/index.html'; 
