@@ -3,7 +3,6 @@ var req = require('request');
 var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var Promise = require('bluebird');
-var data = require('/Users/student/2016-02-web-historian/archives/sites.json');
 
 
 // var index = require('../web/public/index.html');
@@ -22,38 +21,47 @@ exports.handleRequest = function (req, res) {
     if (req.url === '/') { 
       lookup = '/index.html'; 
       lookup = __dirname + '/public' + lookup; f = lookup; 
-    } else {
-      lookup = (req.url.slice(1));
-      console.log('--------------lookup--------------->', lookup);
-      lookup = data[lookup]; f = lookup; 
-      console.log('--------------Lookup-result------------>', f);
-      res.end(f);
+      // var lookup = path.basename(decodeURI(req.url)) || 'index.html', f = lookup;
+      fs.exists(f, function (exists) {
+        if (exists) {
+          fs.readFile(f, 'utf8', function(err, data) {
+            if (err) {
+              res.writeHead(404); res.end('Server Error!');
+              return;
+            }
+
+            var headers = {'Content-type': mimeTypes[path.extname(req.url)]};  
+            res.writeHead(200, headers);
+            res.end(data);
+          });
+          return;
+        } 
+        //doesn't exist
+        res.writeHead(404);
+        res.end();
+      });
+    } else if ( archive.isUrlInList(req.url) ) {
+      lookup = req.url;
+      var archivedData = archive.isUrlArchived(lookup);
+      if (archivedData) {
+        res.writeHead(200);
+        res.end(archivedData);
+        // serve up a file in the sites directory with req.url as the path name
+
+      } else {
+        // console.log('--------------newLookup------------->', lookup);
+        res.writeHead(404);
+        res.end();
+      }
     }
 
-    fs.exists(f, function (exists) {
-      if (exists) {
-        fs.readFile(f, 'utf8', function(err, data) {
-          if (err) {
-            res.writeHead(404); res.end('Server Error!');
-            return;
-          }
-
-          var headers = {'Content-type': mimeTypes[path.extname(req.url)]};  
-          res.writeHead(200, headers);
-          res.end(data);
-        });
-        return;
-      }
-      //doesn't exist
-      res.writeHead(404);
-      res.end();
-    });
-  };
 
   //invoking a normal function before a asynchronous function ends?
+  };
   serveStatic(req, res);
-};
+  //console.log(archive.isUrlInList('timmy'));
 
+};
 // var defaultCorsHeaders = {
 //   'access-control-allow-origin': '*',
 //   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -77,10 +85,4 @@ exports.handleRequest = function (req, res) {
 // };
 
 // var fileWriterAsync = Promise.promisify(fileWriter);
-
-
-
-
-
-
 

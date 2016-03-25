@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-var data = require('/Users/student/2016-02-web-historian/archives/sites.json');
+var data = require('/Users/student/2016-02-web-historian/archives/sites.txt');
 
 
 /*
@@ -14,7 +14,7 @@ var data = require('/Users/student/2016-02-web-historian/archives/sites.json');
 exports.paths = {
   siteAssets: path.join(__dirname, '../web/public'),
   archivedSites: path.join(__dirname, '../archives/sites'),
-  list: path.join(__dirname, '../archives/sites.json')
+  list: path.join(__dirname, '../archives/sites.txt')
 };
 
 // Used for stubbing paths for tests, do not modify
@@ -29,45 +29,59 @@ exports.initialize = function(pathsObj) {
 
 // we have a file with a list of URLS
 // the below function reads that list of URLS
-exports.readListOfUrls = function() {
-  // fs.exists(sites, function (exists) {
-  //     console.log('-------------exists--------SITES------------>', sites);
-  //   if (exists) {
-  //     fs.readFile(JSON.stringify(sites), function(err, data) {
-  //     console.log('---------------------SITES------------>', sites);
-  //       if (err) {
-  //         console.log('ERRRRROOOOORRRRR couldnt read the sites file');
-  //       } else {
-  //         console.log('------------------------data---->', data);
-  //       }
-  //     });
-  //   }
-  // });
+var sitesFilePath = '/Users/student/2016-02-web-historian/archives/sites.txt';
 
-  console.log('!!!!!!!!!!!!data!!!!!!!!!!!!', data['www.google.com']);
-  // fs.writeFile("./data.json", JSON.stringify(data), function(err) {
-  //   if(err) {
-  //     return console.log(err);
-  //   }
-
-  //   console.log("The file was saved!");
-  // }); 
-
-
+exports.readListOfUrls = function(callback) { // lookup === 'www.google.com'
+  var f = sitesFilePath;
+  fs.exists(f, function (exists) {
+    if (exists) {
+      console.log('------------------just checking---------------');
+      fs.readFile(f, 'utf8', function(err, data) {
+        if (err) {
+          console.log('-----------Error: can\'t read list of urls----------');
+          return;
+        }
+        // this is where we want to make an array from the read file
+        return data.split('\n'); 
+      });
+    } else {
+      console.log('-----------Error: filepath doesnt exist----------');
+    }
+  });
 };
 
 // can accept a list that we read (above)
 // and check if a URL is in that list
-exports.isUrlInList = function() {
+exports.isUrlInList = function(lookup, callback) { // lookup === URL were looking for 
+  var sites = readListOfUrls();
+  console.log('-----------------------sites--->', sites);
+  // if lookup is in the array we get from splitting sites.txt by \n
+  if (sites.indexOf(lookup) !== -1) {
+    return true;
+  } else {
+    return false;
+  }
 };
 
 // can use fs.write to add a URL to a list
-exports.addUrlToList = function() {
+exports.addUrlToList = function(lookup, callback) {
+  fs.appendFile(exports.paths.list, url + '\n', function(err, file) {
+    callback();
+  });
 };
 
 
-exports.isUrlArchived = function() {
+exports.isUrlArchived = function(lookup, callback) {
+  var sitePath = path.join(exports.paths.archivedSites, url);
+
+  fs.exists(sitePath, function(exists) {
+    callback(exists);
+  });
 };
 
-exports.downloadUrls = function() {
+exports.downloadUrls = function(urls) {
+  _.each(urls, function (url) {
+    if (!url) { return; }
+    request('http://' + url).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + url));
+  });
 };

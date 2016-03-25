@@ -1,3 +1,4 @@
+console.log('initiate tests');
 var expect = require('chai').expect;
 var server = require('../web/basic-server.js');
 var fs = require('fs');
@@ -14,6 +15,7 @@ archive.initialize({
 });
 
 var request = supertest.agent(server);
+
 
 describe('server', function() {
   describe('GET /', function () {
